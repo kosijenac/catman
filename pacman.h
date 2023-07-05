@@ -59,8 +59,6 @@ public:
     bool isGameOver() { return gameOver; }
     void incPoints(int n = 10) { points += n; }
     void decLives() { lives--; }
-    void shiftUpDown(int n) { coords.y += n; }
-    void shiftLeftRight(int n) { coords.x += n; }
     void endGame()
     {
         textbox->Write("Game over. Points scored: " + std::to_string(GetPoints()));
@@ -70,19 +68,15 @@ public:
 
 class Ghost : public Movable {
     sf::Vector2i start_coords;
-    sf::Vector2i blinky_coords;
+    static sf::Vector2i blinky_coords;
     sf::Vector2i ghoul; // like 'goal', but for ghosts :P
     GhostState state;
-    Direction stunned(std::vector<Direction>&);
-    Direction blinky();
-    Direction pinky();
-    Direction inky();
-    Direction clyde();
     static std::uniform_int_distribution<unsigned> u;
     static std::default_random_engine e;
 
 public:
-    std::string strategy;
+    char strategy;
+    static bool chase;
     Ghost(char, int s = 22);
     Ghost() = default;
     Ghost(const Ghost&) = default;
@@ -93,6 +87,7 @@ public:
     void Move(Pacman&, std::vector<Direction>&);
     void Render(Screen*);
     void setState(GhostState s) { state = s; }
+    static void toggleChase() { chase = !chase; }
     Direction closestToGoal(sf::Vector2i, std::vector<Direction>&);
 };
 

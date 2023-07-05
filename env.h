@@ -25,5 +25,6 @@ private:
     std::vector<Ghost> ghosts;
     sf::Clock clock;
     sf::Time time;
+    sf::Time ghostTime;
     Textbox textbox;
 };

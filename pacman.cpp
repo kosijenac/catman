@@ -31,13 +31,14 @@ void Pacman::Step()
 sf::Vector2i ApplyDirection(Direction d)
 {
     if (d == Direction::Up)
-        return sf::Vector2i(-1, 0);
-    else if (d == Direction::Down)
-        return sf::Vector2i(1, 0);
-    else if (d == Direction::Left)
+        // To enable the bug that exists in the OG game, replace (0,-1) with (-1,-1).
         return sf::Vector2i(0, -1);
-    else if (d == Direction::Right)
+    else if (d == Direction::Down)
         return sf::Vector2i(0, 1);
+    else if (d == Direction::Left)
+        return sf::Vector2i(-1, 0);
+    else if (d == Direction::Right)
+        return sf::Vector2i(1, 0);
 }
 
 void Pacman::Move() { coords += ApplyDirection(dir); }
@@ -62,45 +63,34 @@ bool collisionImminent(Movable& guy, std::vector<std::vector<char>>& w)
     return false;
 }
 
-// bool neighbours(Ghost& g1, Ghost& g2)
-// {
-//     int x1 = g1.GetCoords().x, y1 = g1.GetCoords().y, x2 = g2.GetCoords().x, y2 = g2.GetCoords().y;
-//     if (g1.GetDirection() == Direction::Up && x1 == x2 && y2 == y1 - 1)
-//         return true;
-//     if (g1.GetDirection() == Direction::Down && x1 == x2 && y2 == y1 + 1)
-//         return true;
-//     if (g1.GetDirection() == Direction::Left && x1 == x2 + 1 && y2 == y1)
-//         return true;
-//     if (g1.GetDirection() == Direction::Right && x1 == x2 - 1 && y2 == y1)
-//         return true;
-//     return false;
-// }
+double v2iLength(sf::Vector2i v) { return std::sqrt(v.x * v.x + v.y * v.y); }
 
 Ghost::Ghost(char name, int v)
 {
     dir = Direction::Up;
     state = GhostState::Normal;
     unitSize = v;
+    strategy = name;
     switch (name) {
     case 'b':
         color = sf::Color::Red;
-        strategy = "blinky";
         blinky_coords = start_coords = sf::Vector2i(14, 11);
+        ghoul = sf::Vector2i(25, -2);
         break;
     case 'p':
         color = sf::Color(255, 192, 203);
-        strategy = "pinky";
         start_coords = sf::Vector2i(14, 14);
+        ghoul = sf::Vector2i(2, -2);
         break;
     case 'i':
         color = sf::Color::Cyan;
-        strategy = "inky";
         start_coords = sf::Vector2i(12, 14);
+        ghoul = sf::Vector2i(27, 31);
         break;
     case 'c':
         color = sf::Color(255, 165, 0);
-        strategy = "clyde";
         start_coords = sf::Vector2i(16, 14);
+        ghoul = sf::Vector2i(0, 31);
         break;
     default:
         throw std::invalid_argument("Unknown ghost name.");
@@ -116,13 +106,30 @@ void Ghost::Reset()
     speed = 10;
 }
 
-void Ghost::Move(Pacman& pacman, std::vector<Direction>& available)
+void Ghost::Move(Pacman& pacman, std::vector<Direction>& dirs)
 {
     Direction next;
     if (state == GhostState::Stunned)
-        next = stunned(available);
+        next = dirs[u(e) % dirs.size()];
     else if (state == GhostState::Eaten)
-        next = closestToGoal(start_coords, available)
+        next = closestToGoal(start_coords, dirs);
+    else if (Ghost::chase == false) {
+        next = closestToGoal(ghoul, dirs);
+    } else {
+        sf::Vector2i pacmanDir = ApplyDirection(pacman.GetDirection());
+        if (strategy == 'b')
+            next = closestToGoal(pacman.GetCoords(), dirs);
+        else if (strategy == 'p')
+            next = closestToGoal(pacman.GetCoords() + 4 * pacmanDir, dirs);
+        else if (strategy == 'i')
+            next = closestToGoal(2 * pacman.GetCoords() + 4 * pacmanDir - blinky_coords, dirs);
+        else
+            next = v2iLength(coords - pacman.GetCoords()) > 8 ? closestToGoal(pacman.GetCoords(), dirs)
+                                                              : closestToGoal(ghoul, dirs);
+    }
+    coords += ApplyDirection(next);
+    if (strategy == 'b')
+        blinky_coords = coords;
 }
 
 void Ghost::Render(Screen* p)
@@ -134,30 +141,17 @@ void Ghost::Render(Screen* p)
 
 std::uniform_int_distribution<unsigned> Ghost::u(0, 12);
 std::default_random_engine Ghost::e(time(0));
-
-double v2iLength(sf::Vector2i v) { return std::sqrt(v.x * v.x + v.y * v.y); }
-
-Direction Ghost::stunned(std::vector<Direction>& av) { return av[u(e) & av.size()]; }
-
-Direction Ghost::blinky() { return Direction::Up; }
-
-Direction Ghost::pinky() { return Direction::Up; }
-
-Direction Ghost::inky() { return Direction::Up; }
-
-Direction Ghost::clyde() { return Direction::Up; }
+sf::Vector2i Ghost::blinky_coords = sf::Vector2i(14, 11);
 
 Direction Ghost::closestToGoal(sf::Vector2i goal, std::vector<Direction>& available)
 {
     double distance = 1000.0;
     Direction best;
-
-    // for (Direction av : available) {
-    //     switch (av) {
-    //     case Direction::Up:
-    //         if (v2iLength(goal -))
-    //     }
-    // }
+    for (Direction option : available)
+        if (v2iLength(coords + ApplyDirection(option) - goal) < distance) {
+            distance = v2iLength(coords + ApplyDirection(option) - goal);
+            best = option;
+        }
     return best;
 }
 
@@ -199,10 +193,6 @@ void Map::Update(Pacman& pacman, std::vector<Ghost>& ghosts)
         for (int alt = 0; alt < 4; alt++)
             if (static_cast<Direction>(3 - alt) != current) {
                 g.SetDirection(static_cast<Direction>(alt));
-                // bool hasNeighbour = false;
-                // for (Ghost& other : ghosts)
-                //     if (other != g && neighbours(g, other))
-                //         hasNeighbour = true;
                 if (!collisionImminent(g, world))
                     available.push_back(static_cast<Direction>(alt));
             }

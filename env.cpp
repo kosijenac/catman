@@ -8,8 +8,14 @@
 #define SCREEN_HEIGHT 31
 
 sf::Time Env::timeElapsed() { return time; }
+bool Ghost::chase = false;
 
-void Env::restartClock() { time += clock.restart(); }
+void Env::restartClock()
+{
+    sf::Time diff = clock.restart();
+    time += diff;
+    ghostTime += diff;
+}
 
 void Env::render()
 {
@@ -31,6 +37,13 @@ void Env::update()
         time -= sf::seconds(timeIter);
         if (pacman.isGameOver())
             pacman.Reset();
+    }
+    if (ghostTime.asSeconds() >= 20.0f && Ghost::chase) {
+        ghostTime -= sf::seconds(20.0f);
+        Ghost::toggleChase();
+    } else if (ghostTime.asSeconds() >= 7.0f && !Ghost::chase) {
+        ghostTime -= sf::seconds(7.0f);
+        Ghost::toggleChase();
     }
 }
 
