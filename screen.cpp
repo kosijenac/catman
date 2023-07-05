@@ -24,8 +24,7 @@ Screen::Screen() { Assign("Pacman", sf::Vector2u(640, 480)); }
 
 Screen::~Screen() { Destroy(); }
 
-void Screen::Assign(const std::string& n,
-    const sf::Vector2u& v)
+void Screen::Assign(const std::string& n, const sf::Vector2u& v)
 {
     title = n;
     size = v;
@@ -43,7 +42,7 @@ void Screen::Spawn()
 
 void Screen::Destroy() { window.close(); }
 
-void Screen::clear() { window.clear(sf::Color(200, 200, 200, 255)); }
+void Screen::clear() { window.clear(sf::Color::Black); }
 
 void Screen::draw(sf::Drawable& d) { window.draw(d); }
 

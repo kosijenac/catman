@@ -1,15 +1,23 @@
 #include "env.h"
+#include "pacman.h"
 #include <SFML/Graphics.hpp>
+#include <vector>
 
-sf::Time Env::timeElapsed() { return vrijeme; }
+#define BLOCK_SIZE 22
+#define SCREEN_WIDTH 28
+#define SCREEN_HEIGHT 31
 
-void Env::restartClock() { vrijeme += sat.restart(); }
+sf::Time Env::timeElapsed() { return time; }
+
+void Env::restartClock() { time += clock.restart(); }
 
 void Env::render()
 {
     p.clear();
     map.Render(&p);
     pacman.Render(&p);
+    for (Ghost g : ghosts)
+        g.Render(&p);
     textbox.Render(&p);
     p.display();
 }
@@ -17,34 +25,37 @@ void Env::render()
 void Env::update()
 {
     p.update();
-    float vrijemeIteracije = 1.0f / pacman.GetSpeed();
-    if (vrijeme.asSeconds() >= vrijemeIteracije) {
-        pacman.Step();
-        map.Update(pacman);
-        vrijeme -= sf::seconds(vrijemeIteracije);
-        if (pacman.isGameOver()) {
+    float timeIter = 1.0f / pacman.GetSpeed();
+    if (time.asSeconds() >= timeIter) {
+        map.Update(pacman, ghosts);
+        time -= sf::seconds(timeIter);
+        if (pacman.isGameOver())
             pacman.Reset();
-        }
     }
 }
 
 void Env::handleInput()
 {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)
+        && map.getWorld()[pacman.GetCoords().y - 1][pacman.GetCoords().x] != WALL)
         pacman.SetDirection(Direction::Up);
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)
+        && map.getWorld()[pacman.GetCoords().y + 1][pacman.GetCoords().x] != WALL)
         pacman.SetDirection(Direction::Down);
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)
+        && map.getWorld()[pacman.GetCoords().y][pacman.GetCoords().x - 1] != WALL)
         pacman.SetDirection(Direction::Left);
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)
+        && map.getWorld()[pacman.GetCoords().y][pacman.GetCoords().x + 1] != WALL)
         pacman.SetDirection(Direction::Right);
 }
 
 Env::Env()
-    : p("Pacman", sf::Vector2u(800, 640))
-    , map(16, p.getSize(), &textbox)
-    , pacman(map.dohvatiVBloka(), &textbox)
+    : p("Pacman", sf::Vector2u(BLOCK_SIZE * SCREEN_WIDTH, BLOCK_SIZE * SCREEN_HEIGHT))
+    , map(BLOCK_SIZE, p.getSize(), &textbox, "world.txt")
+    , pacman(map.getBlockSize(), &textbox)
+    , ghosts({ 'c', 'b', 'p', 'i' })
 {
-    textbox.Set(5, 14, 350, sf::Vector2f(225, 0));
-    textbox.Append("Dobro dosli u igru Pacman!");
+    textbox.Set(16, 275, sf::Vector2f(175, 0));
+    textbox.Write("Lives left: 3\t\t\tPoints: 0");
 }

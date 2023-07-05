@@ -5,6 +5,7 @@
 #include "textbox.h"
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <vector>
 
 class Env {
 public:
@@ -21,7 +22,8 @@ private:
     Screen p;
     Map map;
     Pacman pacman;
-    sf::Clock sat;
-    sf::Time vrijeme;
+    std::vector<Ghost> ghosts;
+    sf::Clock clock;
+    sf::Time time;
     Textbox textbox;
 };

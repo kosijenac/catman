@@ -1,23 +1,19 @@
 #include "textbox.h"
 
-Textbox::Textbox()
-{
-    // 5 linija, 9 piksela po znaku, 200 sirina textboxa
-    // i crta se na ekranu od koordinata (0,0)
-    Set(5, 9, 200, sf::Vector2f(0, 0));
-}
+// 5 linija, 9 piksela po znaku, 200 sirina textboxa
+// i crta se na ekranu od koordinata (0,0)
+Textbox::Textbox() { Set(14, 200, sf::Vector2f(0, 0)); }
 
-Textbox::Textbox(int brL, int velZn, float width, sf::Vector2f pozPro)
+Textbox::Textbox(int velZn, float width, sf::Vector2f pozPro)
 {
-    Set(brL, velZn, width, pozPro);
+    Set(velZn, width, pozPro);
 }
 
 Textbox::~Textbox() { Clear(); }
 
-void Textbox::Set(int brL, int velZn, float width, sf::Vector2f pozPro)
+void Textbox::Set(int velZn, float width, sf::Vector2f pozPro)
 {
-    nLines = brL;
-    font.loadFromFile("cmunobi.ttf");
+    font.loadFromFile("cmunobx.ttf");
 
     text.setFont(font);
     text.setString(""); // treba li ovo?
@@ -25,28 +21,17 @@ void Textbox::Set(int brL, int velZn, float width, sf::Vector2f pozPro)
     text.setFillColor(sf::Color::White);
     text.setPosition(pozPro + sf::Vector2f(2.0f, 2.0f));
 
-    background.setSize(sf::Vector2f(width, (brL * (velZn * 1.2f))));
-    background.setFillColor(sf::Color(90, 90, 90, 90));
+    background.setSize(sf::Vector2f(width, (velZn * 1.2f)));
+    background.setFillColor(sf::Color(90, 90, 90, 60));
     background.setPosition(pozPro);
 }
 
-void Textbox::Clear() { messages.clear(); }
-
-void Textbox::Append(std::string nova)
-{
-    messages.push_back(nova);
-    if (messages.size() >= 6)
-        messages.pop_front();
-}
+void Textbox::Clear() { message.clear(); }
 
 void Textbox::Render(Screen* p)
 {
-    std::string content;
-    for (auto& it : messages) {
-        content.append(it + "\n");
-    }
-    if (content != "") {
-        text.setString(content);
+    if (message != "") {
+        text.setString(message);
         p->draw(background);
         p->draw(text);
     }

@@ -1,23 +1,21 @@
 #pragma once
 #include "screen.h"
 #include <SFML/Graphics.hpp>
-#include <deque>
 #include <iostream>
 #include <string>
 
 class Textbox {
 public:
     Textbox();
-    Textbox(int, int, float, sf::Vector2f);
+    Textbox(int, float, sf::Vector2f);
     ~Textbox();
-    void Set(int, int, float, sf::Vector2f);
-    void Append(std::string);
+    void Set(int, float, sf::Vector2f);
+    void Write(std::string m) { message = m; }
     void Clear();
     void Render(Screen*);
 
 private:
-    int nLines;
-    std::deque<std::string> messages;
+    std::string message;
     sf::RectangleShape background;
     sf::Font font;
     sf::Text text;
