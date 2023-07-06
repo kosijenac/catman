@@ -30,7 +30,6 @@ void Screen::Assign(const std::string& n, const sf::Vector2u& v)
     size = v;
     fullScreen = false;
     done = false;
-    // otvaranje windowa nakon popunjavanja postavki
     Spawn();
 }
 

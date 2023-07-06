@@ -10,7 +10,7 @@ public:
     Textbox(int, float, sf::Vector2f);
     ~Textbox();
     void Set(int, float, sf::Vector2f);
-    void Write(std::string m) { message = m; }
+    void Write(int, int, int);
     void Clear();
     void Render(Screen*);
 

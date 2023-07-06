@@ -23,6 +23,9 @@ private:
     Map map;
     Pacman pacman;
     std::vector<Ghost> ghosts;
+    sf::Texture texture;
+    sf::Texture textureMap;
+    sf::Sprite spriteMap;
     sf::Clock clock;
     sf::Time time;
     sf::Time ghostTime;

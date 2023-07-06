@@ -8,7 +8,6 @@
 #define SCREEN_HEIGHT 31
 
 sf::Time Env::timeElapsed() { return time; }
-bool Ghost::chase = false;
 
 void Env::restartClock()
 {
@@ -35,15 +34,24 @@ void Env::update()
     if (time.asSeconds() >= timeIter) {
         map.Update(pacman, ghosts);
         time -= sf::seconds(timeIter);
-        if (pacman.isGameOver())
+        Movable::toggleTick();
+        if (pacman.isGameOver()) {
             pacman.Reset();
+            for (Ghost& g : ghosts)
+                g.Reset();
+            map = Map(BLOCK_SIZE, p.getSize(), &textbox, "world.txt");
+        }
     }
-    if (ghostTime.asSeconds() >= 20.0f && Ghost::chase) {
+    if (ghostTime.asSeconds() >= 20.0f && Ghost::getChase()) {
         ghostTime -= sf::seconds(20.0f);
         Ghost::toggleChase();
-    } else if (ghostTime.asSeconds() >= 7.0f && !Ghost::chase) {
+        for (Ghost& g : ghosts)
+            g.setStunned(false);
+    } else if (ghostTime.asSeconds() >= 7.0f && !Ghost::getChase()) {
         ghostTime -= sf::seconds(7.0f);
         Ghost::toggleChase();
+        for (Ghost& g : ghosts)
+            g.setStunned(false);
     }
 }
 
@@ -66,9 +74,13 @@ void Env::handleInput()
 Env::Env()
     : p("Pacman", sf::Vector2u(BLOCK_SIZE * SCREEN_WIDTH, BLOCK_SIZE * SCREEN_HEIGHT))
     , map(BLOCK_SIZE, p.getSize(), &textbox, "world.txt")
-    , pacman(map.getBlockSize(), &textbox)
-    , ghosts({ 'c', 'b', 'p', 'i' })
+    , pacman(map.getBlockSize(), &textbox, &texture)
+    , ghosts({ Ghost('c', &texture), Ghost('b', &texture), Ghost('p', &texture), Ghost('i', &texture) })
 {
-    textbox.Set(16, 275, sf::Vector2f(175, 0));
-    textbox.Write("Lives left: 3\t\t\tPoints: 0");
+    textureMap.loadFromFile("minimap.jpg");
+    spriteMap.setTexture(textureMap);
+    spriteMap.setScale(float(SCREEN_WIDTH) / 1024, float(SCREEN_HEIGHT) / 1024);
+    texture.loadFromFile("maia_oneko.gif");
+    textbox.Set(16, 400, sf::Vector2f(120, 0));
+    textbox.Write(3, 0, 0);
 }

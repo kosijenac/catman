@@ -2,23 +2,32 @@
 #include <fstream>
 #include <vector>
 
-Pacman::Pacman(int v, Textbox* t)
+bool Movable::tick = true;
+
+Pacman::Pacman(int v, Textbox* t, sf::Texture* tx)
 {
+    highScore = 0;
     unitSize = v;
     textbox = t;
+    texture = tx;
+    sprite.setTexture(*texture);
+    sprite.setScale(float(v) / 32, float(v) / 32);
     color = sf::Color::Yellow;
-    block.setRadius(float(v - 1) / 2);
     Reset();
 }
 
-void Pacman::Reset()
+void Pacman::Reset(bool over)
 {
     coords = sf::Vector2i(14, 23);
     SetDirection(Direction::Left);
-    speed = 10;
-    lives = 3;
-    points = 0;
-    gameOver = false;
+    speed = 8;
+    if (points > highScore)
+        highScore = points;
+    if (over) {
+        lives = 3;
+        points = 0;
+        gameOver = false;
+    }
 }
 
 void Pacman::Step()
@@ -41,13 +50,26 @@ sf::Vector2i ApplyDirection(Direction d)
         return sf::Vector2i(1, 0);
 }
 
+sf::IntRect GetCat(bool tick, Direction dir)
+{
+    if (dir == Direction::Up)
+        return tick ? sf::IntRect(32, 64, 32, 32) : sf::IntRect(32, 96, 32, 32);
+    else if (dir == Direction::Down)
+        return tick ? sf::IntRect(192, 96, 32, 32) : sf::IntRect(224, 64, 32, 32);
+    else if (dir == Direction::Left)
+        return tick ? sf::IntRect(128, 64, 32, 32) : sf::IntRect(128, 96, 32, 32);
+    else if (dir == Direction::Right)
+        return tick ? sf::IntRect(96, 0, 32, 32) : sf::IntRect(96, 32, 32, 32);
+}
+
 void Pacman::Move() { coords += ApplyDirection(dir); }
 
 void Pacman::Render(Screen* p)
 {
-    block.setFillColor(color);
-    block.setPosition(coords.x * unitSize, coords.y * unitSize);
-    p->draw(block);
+    sprite.setTextureRect(GetCat(Movable::getTick(), dir));
+    sprite.setColor(color);
+    sprite.setPosition(coords.x * unitSize, coords.y * unitSize);
+    p->draw(sprite);
 }
 
 bool collisionImminent(Movable& guy, std::vector<std::vector<char>>& w)
@@ -65,12 +87,15 @@ bool collisionImminent(Movable& guy, std::vector<std::vector<char>>& w)
 
 double v2iLength(sf::Vector2i v) { return std::sqrt(v.x * v.x + v.y * v.y); }
 
-Ghost::Ghost(char name, int v)
+bool Ghost::chase = false;
+
+Ghost::Ghost(char name, sf::Texture* tx, int v)
 {
-    dir = Direction::Up;
-    state = GhostState::Normal;
     unitSize = v;
+    texture = tx;
     strategy = name;
+    sprite.setTexture(*texture);
+    sprite.setScale(float(v) / 32, float(v) / 32);
     switch (name) {
     case 'b':
         color = sf::Color::Red;
@@ -95,12 +120,13 @@ Ghost::Ghost(char name, int v)
     default:
         throw std::invalid_argument("Unknown ghost name.");
     }
-    block.setRadius(float(v - 1) / 2);
     Reset();
 }
 
 void Ghost::Reset()
 {
+    stunned = false;
+    eaten = false;
     coords = start_coords;
     dir = Direction::Up;
     speed = 10;
@@ -109,10 +135,10 @@ void Ghost::Reset()
 void Ghost::Move(Pacman& pacman, std::vector<Direction>& dirs)
 {
     Direction next;
-    if (state == GhostState::Stunned)
-        next = dirs[u(e) % dirs.size()];
-    else if (state == GhostState::Eaten)
+    if (eaten)
         next = closestToGoal(start_coords, dirs);
+    else if (stunned)
+        next = dirs[u(e) % dirs.size()];
     else if (Ghost::chase == false) {
         next = closestToGoal(ghoul, dirs);
     } else {
@@ -127,16 +153,16 @@ void Ghost::Move(Pacman& pacman, std::vector<Direction>& dirs)
             next = v2iLength(coords - pacman.GetCoords()) > 8 ? closestToGoal(pacman.GetCoords(), dirs)
                                                               : closestToGoal(ghoul, dirs);
     }
+    dir = next;
     coords += ApplyDirection(next);
-    if (strategy == 'b')
-        blinky_coords = coords;
 }
 
 void Ghost::Render(Screen* p)
 {
-    block.setFillColor(state == GhostState::Stunned ? sf::Color::Blue : color);
-    block.setPosition(coords.x * unitSize, coords.y * unitSize);
-    p->draw(block);
+    sprite.setTextureRect(GetCat(Movable::getTick(), dir));
+    sprite.setColor(color);
+    sprite.setPosition(coords.x * unitSize, coords.y * unitSize);
+    p->draw(sprite);
 }
 
 std::uniform_int_distribution<unsigned> Ghost::u(0, 12);
@@ -176,8 +202,8 @@ void Map::Update(Pacman& pacman, std::vector<Ghost>& ghosts)
         world[pacman.GetCoords().y][pacman.GetCoords().x] = BLANK;
     } else if (world[pacman.GetCoords().y][pacman.GetCoords().x] == BALL) {
         pacman.incPoints(50);
-        for (Ghost g : ghosts)
-            g.setState(GhostState::Stunned);
+        for (Ghost& g : ghosts)
+            g.setStunned(true);
         world[pacman.GetCoords().y][pacman.GetCoords().x] = BLANK;
     }
 
@@ -197,10 +223,29 @@ void Map::Update(Pacman& pacman, std::vector<Ghost>& ghosts)
                     available.push_back(static_cast<Direction>(alt));
             }
         g.Move(pacman, available);
+        if (g.GetCoords().x <= 0)
+            g.SetCoords(brPolja.x + g.GetCoords().x, g.GetCoords().y);
+        if (g.GetCoords().x >= brPolja.x - 1)
+            g.SetCoords(g.GetCoords().x % brPolja.x, g.GetCoords().y);
+        if (g.strategy == 'b')
+            Ghost::setBlinkyCoords(g.GetCoords());
+        if (g.GetCoords() == g.getStartCoords())
+            g.setEaten(false);
+        if (g.GetCoords() == pacman.GetCoords()) {
+            if (g.getStunned()) {
+                g.setEaten(true);
+                g.setStunned(false);
+            } else {
+                pacman.loseLife();
+                pacman.Reset(false);
+                for (Ghost& h : ghosts)
+                    h.Reset();
+                return;
+            }
+        }
     }
 
-    ptextbox->Write("Lives left: " + std::to_string(pacman.GetLives())
-        + "\t\t\tPoints: " + std::to_string(pacman.GetPoints()));
+    ptextbox->Write(pacman.GetLives(), pacman.GetPoints(), pacman.GetHighScore());
 }
 
 void Map::Render(Screen* p)
