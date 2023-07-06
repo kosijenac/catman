@@ -20,7 +20,7 @@ void Pacman::Reset(bool over)
 {
     coords = sf::Vector2i(14, 23);
     SetDirection(Direction::Left);
-    speed = 8;
+    speed = 7;
     if (points > highScore)
         highScore = points;
     if (over) {
@@ -32,7 +32,7 @@ void Pacman::Reset(bool over)
 
 void Pacman::Step()
 {
-    if (speed <= 20)
+    if (speed <= 14)
         speed += 0.01f;
     Move();
 }
@@ -160,7 +160,7 @@ void Ghost::Move(Pacman& pacman, std::vector<Direction>& dirs)
 void Ghost::Render(Screen* p)
 {
     sprite.setTextureRect(GetCat(Movable::getTick(), dir));
-    sprite.setColor(color);
+    sprite.setColor(eaten ? sf::Color::White : (stunned ? sf::Color::Blue : color));
     sprite.setPosition(coords.x * unitSize, coords.y * unitSize);
     p->draw(sprite);
 }
@@ -244,21 +244,16 @@ void Map::Update(Pacman& pacman, std::vector<Ghost>& ghosts)
             }
         }
     }
-
     ptextbox->Write(pacman.GetLives(), pacman.GetPoints(), pacman.GetHighScore());
+    if (pacman.GetPoints() == 2600)
+        ptextbox->Write("Congrats, you won! Get eaten to start new game!");
 }
 
 void Map::Render(Screen* p)
 {
     for (int i = 0; i < world.size(); i++) {
         for (int j = 0; j < world[0].size(); j++) {
-            if (world[i][j] == WALL) {
-                sf::RectangleShape wall;
-                wall.setSize(sf::Vector2f(float(blockSize), float(blockSize)));
-                wall.setFillColor(sf::Color::Blue);
-                wall.setPosition(j * blockSize, i * blockSize);
-                p->draw(wall);
-            } else if (world[i][j] == FOOD) {
+            if (world[i][j] == FOOD) {
                 sf::CircleShape food;
                 food.setRadius(2);
                 food.setFillColor(sf::Color::White);

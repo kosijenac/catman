@@ -19,6 +19,7 @@ void Env::restartClock()
 void Env::render()
 {
     p.clear();
+    p.draw(spriteMap);
     map.Render(&p);
     pacman.Render(&p);
     for (Ghost g : ghosts)
@@ -72,15 +73,15 @@ void Env::handleInput()
 }
 
 Env::Env()
-    : p("Pacman", sf::Vector2u(BLOCK_SIZE * SCREEN_WIDTH, BLOCK_SIZE * SCREEN_HEIGHT))
+    : p("Catman", sf::Vector2u(BLOCK_SIZE * SCREEN_WIDTH, BLOCK_SIZE * SCREEN_HEIGHT))
     , map(BLOCK_SIZE, p.getSize(), &textbox, "world.txt")
     , pacman(map.getBlockSize(), &textbox, &texture)
     , ghosts({ Ghost('c', &texture), Ghost('b', &texture), Ghost('p', &texture), Ghost('i', &texture) })
 {
-    textureMap.loadFromFile("minimap.jpg");
+    textureMap.loadFromFile("maze.png");
     spriteMap.setTexture(textureMap);
-    spriteMap.setScale(float(SCREEN_WIDTH) / 1024, float(SCREEN_HEIGHT) / 1024);
+    spriteMap.setScale(float(SCREEN_WIDTH * BLOCK_SIZE) / 224, float(SCREEN_HEIGHT * BLOCK_SIZE) / 248);
     texture.loadFromFile("maia_oneko.gif");
-    textbox.Set(16, 400, sf::Vector2f(120, 0));
+    textbox.Set(16, 425, sf::Vector2f(100, 0));
     textbox.Write(3, 0, 0);
 }

@@ -42,3 +42,5 @@ void Textbox::Write(int lives, int points, int score)
     message = "Lives left: " + std::to_string(lives) + "\t\tPoints: " + std::to_string(points)
         + "\t\tHigh Score: " + std::to_string(score);
 }
+
+void Textbox::Write(std::string txt) { message = txt; }

@@ -11,6 +11,7 @@ public:
     ~Textbox();
     void Set(int, float, sf::Vector2f);
     void Write(int, int, int);
+    void Write(std::string);
     void Clear();
     void Render(Screen*);
 
