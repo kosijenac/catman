@@ -246,7 +246,7 @@ void Map::Update(Pacman& pacman, std::vector<Ghost>& ghosts)
     }
     ptextbox->Write(pacman.GetLives(), pacman.GetPoints(), pacman.GetHighScore());
     if (pacman.GetPoints() == 2600)
-        ptextbox->Write("Congrats, you won! Get eaten to start new game!");
+        ptextbox->Write("Congrats, you won! Get eaten to start a new game!");
 }
 
 void Map::Render(Screen* p)

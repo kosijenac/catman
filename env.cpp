@@ -82,6 +82,6 @@ Env::Env()
     spriteMap.setTexture(textureMap);
     spriteMap.setScale(float(SCREEN_WIDTH * BLOCK_SIZE) / 224, float(SCREEN_HEIGHT * BLOCK_SIZE) / 248);
     texture.loadFromFile("maia_oneko.gif");
-    textbox.Set(16, 425, sf::Vector2f(100, 0));
+    textbox.Set(16, 450, sf::Vector2f(100, 0));
     textbox.Write(3, 0, 0);
 }
