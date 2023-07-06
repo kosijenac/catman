@@ -208,7 +208,7 @@ void Map::Update(Pacman& pacman, std::vector<Ghost>& ghosts)
     }
 
     sf::Vector2i brPolja(screenSize.x / blockSize, screenSize.y / blockSize);
-    if (pacman.GetCoords().x <= 0)
+    if (pacman.GetCoords().x < 0)
         pacman.SetCoords(brPolja.x + pacman.GetCoords().x, pacman.GetCoords().y);
     if (pacman.GetCoords().x >= brPolja.x - 1)
         pacman.SetCoords(pacman.GetCoords().x % brPolja.x, pacman.GetCoords().y);
@@ -223,7 +223,7 @@ void Map::Update(Pacman& pacman, std::vector<Ghost>& ghosts)
                     available.push_back(static_cast<Direction>(alt));
             }
         g.Move(pacman, available);
-        if (g.GetCoords().x <= 0)
+        if (g.GetCoords().x < 0)
             g.SetCoords(brPolja.x + g.GetCoords().x, g.GetCoords().y);
         if (g.GetCoords().x >= brPolja.x - 1)
             g.SetCoords(g.GetCoords().x % brPolja.x, g.GetCoords().y);
